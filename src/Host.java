@@ -117,8 +117,27 @@ public class Host implements JSONSerializable {
         }
     }
 
+    /**
+     * Debugging helper, just prints the attributes of this host
+     */
     public void printAttributes() {
         System.out.println("address: " + this.address + "\nport: " + this.port + "\nuid: " + this.UID);
+    }
+
+    /**
+     * returns the address of this host
+     * @return ^
+     */
+    public String getAddress() {
+        return this.address;
+    }
+
+    /**
+     * returns the port number of this host
+     * @return ^
+     */
+    public int getPort() {
+        return this.port;
     }
 
     /**
