@@ -1,6 +1,6 @@
 
 /**
- * Tuple helper class inspired by Dr. Kissel aka Doc Kizzy aka Da Oracle
+ * Tuple helper class inspired by Dr. Kissel aka Doc Z-Kizzy aka Da Oracle
  * (If you dont like the nicknames they're from Jelly (if you do they're from me))
  * 
  * Used in Store and Value classes
