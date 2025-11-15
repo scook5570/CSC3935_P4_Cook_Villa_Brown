@@ -1,6 +1,8 @@
+package messages;
 import java.io.InvalidObjectException;
 import java.util.Base64;
 
+import dht.Host;
 import merrimackutil.json.types.JSONObject;
 import merrimackutil.json.types.JSONType;
 

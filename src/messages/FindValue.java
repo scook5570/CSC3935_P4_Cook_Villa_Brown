@@ -1,25 +1,26 @@
+package messages;
 import merrimackutil.json.types.JSONObject;
 
 /**
- * Class representing a FindNode message type
+ * class representing a FindValue message type
  */
-public class FindNode extends Message {
+public class FindValue extends Message {
 
     private String targetUID;
 
     /**
-     * Builds a FindNode message type
+     * Builds a FindValue message type
      * @param type message type of this object
      * @param srcAddr source IP address
      * @param srcPort source port
      * @param tUid target UID
      */
-    public FindNode(String type, String srcAddr, int srcPort, String tUID) {
+    public FindValue(String type, String srcAddr, int srcPort, String tUID) {
 
         super(type, srcAddr, srcPort);
 
-        if (type != "FINDNODE") {
-            throw new IllegalArgumentException("Type field must be FINDNODE for the FindNode message type");
+        if (type != "FINDVALUE") {
+            throw new IllegalArgumentException("Type field must be FindValue for the FindValue message type");
         }
 
         if (!isBase64(tUID)) {

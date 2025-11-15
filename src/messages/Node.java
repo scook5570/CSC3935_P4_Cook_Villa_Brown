@@ -1,3 +1,5 @@
+package messages;
+import dht.Host;
 import merrimackutil.json.types.JSONObject;
 
 /**

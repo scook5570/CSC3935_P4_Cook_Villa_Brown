@@ -1,9 +1,11 @@
+package dht;
 import java.io.InvalidObjectException;
 import java.util.Base64;
 
 import merrimackutil.json.JSONSerializable;
 import merrimackutil.json.types.JSONObject;
 import merrimackutil.json.types.JSONType;
+import messages.Message;
 
 /**
  * class representing a routing record
