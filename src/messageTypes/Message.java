@@ -1,6 +1,9 @@
+package messageTypes;
+
 import java.io.InvalidObjectException;
 import java.util.Base64;
 
+import host.Host;
 import merrimackutil.json.types.JSONObject;
 import merrimackutil.json.types.JSONType;
 

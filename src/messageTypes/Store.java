@@ -1,25 +1,26 @@
+package messageTypes;
 import merrimackutil.json.types.JSONObject;
 
-public class Value extends Message {
+public class Store extends Message {
 
     private String key;
     private String value;
     private Tuple keyValuePair;
 
     /**
-     * Builds a Value message type from the inputted values
+     * Builds a Store message type from the inputted values
      * @param type message type of this object
      * @param srcAddr source IP address
      * @param srcPort source port
      * @param ky key
      * @param val value
      */
-    public Value(String type, String srcAddr, int srcPort, String ky, String val) {
+    public Store(String type, String srcAddr, int srcPort, String ky, String val) {
         
         super(type, srcAddr, srcPort);
 
-        if (type != "VALUE") {
-            throw new IllegalArgumentException("Type field should be 'Value' for Value message type");
+        if (type != "STORE") {
+            throw new IllegalArgumentException("Type field should be 'STORE' for Store message type");
         }
 
         if (!Message.checkString(val)) {

@@ -1,3 +1,7 @@
+package messageTypes;
+
+import host.Host;
+
 import merrimackutil.json.types.JSONObject;
 
 /**

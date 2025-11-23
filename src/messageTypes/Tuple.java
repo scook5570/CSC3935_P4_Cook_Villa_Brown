@@ -1,3 +1,4 @@
+package messageTypes;
 
 /**
  * Tuple helper class inspired by Dr. Kissel aka Doc Z-Kizzy aka Da Oracle

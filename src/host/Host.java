@@ -1,5 +1,8 @@
+package host;
 import java.io.InvalidObjectException;
 import java.util.Base64;
+
+import messageTypes.*;
 
 import merrimackutil.json.JSONSerializable;
 import merrimackutil.json.types.JSONObject;
