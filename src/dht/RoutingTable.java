@@ -137,7 +137,7 @@ public class RoutingTable {
      * @param peerUid  the peer node ID
      * @return -1 if invalid or identical IDs.
      */
-    public static int getBucketIndex(String localUid, String peerUid) {
+    public synchronized int getBucketIndex(String localUid, String peerUid) {
         if (localUid == null || peerUid == null)
             return -1;
         byte[] a = decodeId(localUid);
