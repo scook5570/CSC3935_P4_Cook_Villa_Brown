@@ -18,7 +18,7 @@ public class KeyValueStore implements JSONSerializable {
     private final Map<String, String> store;
 
     /**
-     * Construcotr for the KeyValueStore
+     * Constructor for the KeyValueStore
      * @param obj JSON object to intialize KeyValueStore
      * @throws InvalidObjectException
      */
@@ -29,7 +29,6 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Stores a value for a given key
-     * 
      * @param key the key to store the value to
      * @param value the value to store to the key
      */
