@@ -34,8 +34,12 @@ public class RoutingTable {
      */
     public synchronized void addHost(String localUid, Host host) {
         int idx = getBucketIndex(localUid, host.getTargetUid());
-        if (idx < 0 || idx >= buckets.size())
+        // If getBucketIndex returned -1 (identical/invalid IDs), just ignore.
+        if (idx == -1)
             return;
+        // Any other out-of-range index indicates a programming/data error — fail fast.
+        if (idx < 0 || idx >= buckets.size())
+            throw new IndexOutOfBoundsException("Invalid bucket index: " + idx);
         Bucket bucket = buckets.get(idx);
 
         // If host already present, update it
@@ -137,7 +141,7 @@ public class RoutingTable {
      * @param peerUid  the peer node ID
      * @return -1 if invalid or identical IDs.
      */
-    public static int getBucketIndex(String localUid, String peerUid) {
+    public synchronized int getBucketIndex(String localUid, String peerUid) {
         if (localUid == null || peerUid == null)
             return -1;
         byte[] a = decodeId(localUid);
