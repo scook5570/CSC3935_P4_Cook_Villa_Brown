@@ -54,7 +54,7 @@ public class ServiceThread implements Runnable {
      */
     @Override
     public void run() {
-        try (ServerSocket server = new ServerSocket(this.port)) {
+        try (ServerSocket server = new ServerSocket(port)) {
             while (true) {
                 Socket sock = server.accept();
                 try {
@@ -70,7 +70,7 @@ public class ServiceThread implements Runnable {
                 }
             }
         } catch (IOException e) {
-            System.err.println("ServiceThread: failed to open server socket on port " + this.port + ": " + e);
+            System.err.println("ServiceThread: failed to open server socket on port " + port + ": " + e);
         }
     }
 
@@ -127,7 +127,7 @@ public class ServiceThread implements Runnable {
         Host peer = null;
         if (peerUid != null) {
             peer = new Host(srcAddr, srcPrt, peerUid);
-            rt.addHost(this.uid, peer);
+            rt.addHost(uid, peer);
         }
 
         String responseStr = null;
@@ -137,7 +137,7 @@ public class ServiceThread implements Runnable {
             FindNode fn = (FindNode) m;
             String target = fn.getTargetUid();
             ArrayList<Host> closest = rt.getKClosestPeers(target, rt.getK());
-            Node nodeMsg = new Node("NODE", this.address, this.port, closest.toArray(new Host[0]));
+            Node nodeMsg = new Node("NODE", address, port, closest.toArray(new Host[0]));
             responseStr = nodeMsg.serialize().toJSON();
 
         } else if (m instanceof FindValue) {
@@ -150,11 +150,11 @@ public class ServiceThread implements Runnable {
             }
 
             if (val != null) {
-                Value vmsg = new Value("VALUE", this.address, this.port, target, val);
+                Value vmsg = new Value("VALUE", address, port, target, val);
                 responseStr = vmsg.serialize().toJSON();
             } else {
                 ArrayList<Host> closest = rt.getKClosestPeers(target, rt.getK());
-                Node nodeMsg = new Node("NODE", this.address, this.port, closest.toArray(new Host[0]));
+                Node nodeMsg = new Node("NODE", address, port, closest.toArray(new Host[0]));
                 responseStr = nodeMsg.serialize().toJSON();
             }
 
@@ -171,7 +171,7 @@ public class ServiceThread implements Runnable {
             Node nm = (Node) m;
             Host[] hosts = nm.getHosts();
             if (hosts != null && hosts.length > 0) {
-                rt.addHosts(this.uid, hosts);
+                rt.addHosts(uid, hosts);
             }
 
         } else if (m instanceof Value) {
