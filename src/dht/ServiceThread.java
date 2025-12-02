@@ -5,8 +5,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.nio.ByteBuffer;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -108,13 +110,23 @@ public class ServiceThread implements Runnable {
             return;
         }
 
-        // update routing table with sender info
+        // update routing table with sender info: compute peer UID from addr+port
+        // (SHA-1, Base64)
         String srcAddr = m.getSourceAddress();
         int srcPrt = m.getSourcePort();
-        String peerUid = getComputedUidFromMessage(srcAddr, srcPrt);
+        String peerUid = null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            md.update(srcAddr.getBytes(StandardCharsets.UTF_8));
+            md.update(ByteBuffer.allocate(4).putInt(srcPrt).array());
+            peerUid = Base64.getEncoder().encodeToString(md.digest());
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("ServiceThread: SHA-1 not available: " + e);
+        }
 
+        Host peer = null;
         if (peerUid != null) {
-            Host peer = new Host(srcAddr, srcPrt, peerUid);
+            peer = new Host(srcAddr, srcPrt, peerUid);
             rt.addHost(this.uid, peer);
         }
 
@@ -134,14 +146,7 @@ public class ServiceThread implements Runnable {
             String val = null;
 
             if (kvs != null) {
-                try {
-                    Method gm = kvs.getClass().getMethod("getValue", String.class);
-                    Object got = gm.invoke(kvs, target);
-                    if (got instanceof String)
-                        val = (String) got;
-                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    System.err.println("ServiceThread: failed findvalue invoke: " + e);
-                }
+                val = kvs.getValue(target);
             }
 
             if (val != null) {
@@ -159,19 +164,15 @@ public class ServiceThread implements Runnable {
             String value = st.getValue();
 
             if (kvs != null) {
-                try {
-                    Method putm = kvs.getClass().getMethod("put", String.class, String.class);
-                    putm.invoke(kvs, key, value);
-                } catch (Exception e) {
-                    System.err.println("ServiceThread: failed store invoke: " + e);
-                }
+                kvs.put(key, value);
             }
 
         } else if (m instanceof Node) {
             Node nm = (Node) m;
             Host[] hosts = nm.getHosts();
-            if (hosts != null && hosts.length > 0)
+            if (hosts != null && hosts.length > 0) {
                 rt.addHosts(this.uid, hosts);
+            }
 
         } else if (m instanceof Value) {
             Value vm = (Value) m;
@@ -179,42 +180,18 @@ public class ServiceThread implements Runnable {
             String value = vm.getValue();
 
             if (kvs != null) {
-                Method putm;
-                try {
-                    putm = kvs.getClass().getMethod("put", String.class, String.class);
-                    putm.invoke(kvs, key, value);
-                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    System.err.println("ServiceThread: failed store invoke: " + e);
-                }
+                kvs.put(key, value);
             }
         }
+
+        // end of handleConnection dispatch
 
         if (responseStr != null) {
-            BufferedWriter out = new BufferedWriter(
-                    new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8));
-            out.write(responseStr);
-            out.flush();
-        }
-    }
-
-    /**
-     * Get the computer UID from the routing table based on address and port.
-     * 
-     * @param address the IP address of the computer
-     * @param port    the port number of the computer
-     * @return the UID of the computer if found, otherwise null
-     */
-    private String getComputedUidFromMessage(String address, int port) {
-        // Computer uid
-        ArrayList<Host> allHosts = new ArrayList<>();
-        for (int i = 0; i < rt.getBuckets().size(); i++) {
-            allHosts.addAll(rt.getKClosestRecords(i));
-        }
-        for (Host h : allHosts) {
-            if (h.getAddress().equals(address) && h.getPort() == port) {
-                return h.getTargetUid();
+            try (BufferedWriter out = new BufferedWriter(
+                    new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8))) {
+                out.write(responseStr);
+                out.flush();
             }
         }
-        return null;
     }
 }
