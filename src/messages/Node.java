@@ -1,5 +1,6 @@
 package messages;
 import dht.Host;
+import merrimackutil.json.types.JSONArray;
 import merrimackutil.json.types.JSONObject;
 
 /**
@@ -19,8 +20,9 @@ public class Node extends Message {
     public Node(String type, String sourceAddr, int sourcePrt, Host[] hosts) {
         super(type, sourceAddr, sourcePrt);
 
-        if (type != "NODE") {
-            throw new IllegalArgumentException("Type field for Node message type should be 'NODE'");
+        // Per instructions should be nodelist
+        if (!type.equals("NODELIST")) {
+            throw new IllegalArgumentException("Type field for Node message type should be 'NODELIST'");
         }
 
         this.hosts = hosts;
@@ -36,7 +38,15 @@ public class Node extends Message {
         obj.put("type", this.type);
         obj.put("source-address", this.sourceAddress);
         obj.put("source-port", this.sourcePort);
-        obj.put("hosts", this.hosts);
+        
+        // Serialize hosts array, cant just add the array 
+        JSONArray hostsArray = new JSONArray();
+        if (this.hosts != null) {
+            for (Host host : this.hosts) {
+                hostsArray.add(host.toJSONType());
+            }
+        }
+        obj.put("hosts", hostsArray);
         return obj;
     }
 

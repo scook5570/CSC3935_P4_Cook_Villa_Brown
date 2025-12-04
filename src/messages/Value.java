@@ -19,7 +19,7 @@ public class Value extends Message {
         
         super(type, srcAddr, srcPort);
 
-        if (type != "VALUE") {
+        if (!type.equals("VALUE")) {
             throw new IllegalArgumentException("Type field should be 'Value' for Value message type");
         }
 
