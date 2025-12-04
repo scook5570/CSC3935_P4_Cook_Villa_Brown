@@ -66,11 +66,11 @@ public class Host implements JSONSerializable {
         }
 
         obj = (JSONObject) arg0;
-
-        String[] keys = {"address", "port", "uid"};
+        // Small fix here, config specifies "addr"
+        String[] keys = {"addr", "port", "uid"};
         obj.checkValidity(keys);
 
-        String addr = obj.getString("address");
+        String addr = obj.getString("addr");
         int prt = obj.getInt("port");
         String uid = obj.getString("uid");
 
@@ -98,7 +98,7 @@ public class Host implements JSONSerializable {
     @Override
     public JSONType toJSONType() {
         JSONObject obj = new JSONObject();
-        obj.put("address", this.address);
+        obj.put("addr", this.address);
         obj.put("port", this.port);
         obj.put("uid", this.UID);
         return obj;
