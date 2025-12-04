@@ -86,7 +86,7 @@ public abstract class Message {
             String[] store_and_value_keys = {"type", "source-address", "source-port", "key", "value"};
 
 
-            switch (obj.getString("key")) {
+            switch (obj.getString("type")) {
 
                 case ("FINDNODE"):
                     obj.checkValidity(findNode_and_findValue_keys);
@@ -136,6 +136,16 @@ public abstract class Message {
                     key = obj.getString("key");
                     value = obj.getString("value");
                     return new Value(type, sourceAddr, sourcePrt, key, value);
+                case ("PING"):
+                    type = obj.getString("type");
+                    sourceAddr = obj.getString("source-address");
+                    sourcePrt = obj.getInt("source-port");
+                    return new Ping(type, sourceAddr, sourcePrt);
+                case ("PONG"):
+                    type = obj.getString("type");
+                    sourceAddr = obj.getString("source-address");
+                    sourcePrt = obj.getInt("source-port");
+                    return new Pong(type, sourceAddr, sourcePrt);
                 
                 default:
                     throw new IllegalArgumentException("Could not convert object into a Message object");
@@ -168,6 +178,10 @@ public abstract class Message {
                 return "NODELIST";
             case "VALUE":
                 return "VALUE";
+            case "PING":
+                return "PING";
+            case "PONG":
+                return "PONG";
             case null:
             case "":
                 return "Type field is empty";
@@ -187,6 +201,8 @@ public abstract class Message {
             case "STORE":
             case "NODELIST":
             case "VALUE":
+            case "PING":
+            case "PONG":
                 return true;
             default:
                 return false;
