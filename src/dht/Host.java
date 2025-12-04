@@ -1,4 +1,5 @@
 package dht;
+
 import java.io.InvalidObjectException;
 import java.util.Base64;
 
@@ -18,9 +19,10 @@ public class Host implements JSONSerializable {
 
     /**
      * Builds a Host object from the inputted fields
+     * 
      * @param addr IP address
-     * @param prt port number
-     * @param uid host UID
+     * @param prt  port number
+     * @param uid  host UID
      */
     public Host(String addr, int prt, String uid) {
 
@@ -30,8 +32,8 @@ public class Host implements JSONSerializable {
 
         if (!Message.checkString(uid)) {
             throw new IllegalArgumentException("UID input is null or empty");
-        } 
-        
+        }
+
         if (prt < 0) {
             throw new IllegalArgumentException("Port number can't be less than 0");
         }
@@ -47,19 +49,24 @@ public class Host implements JSONSerializable {
 
     /**
      * Builds a Host object from the inputted fields
+     * 
      * @param arg JSONType containing the fields of this Host
+     * @throws InvalidObjectException if the inputted JSONType is invalid
      */
     public Host(JSONType arg) throws InvalidObjectException {
-       deserialize(arg);
+        deserialize(arg);
     }
 
     /**
      * Serializes the fields of the message into a JSON object
+     * 
+     * @param arg0 JSON object to populate
      * @return a JSON object containing the fields of this message
+     * @throws InvalidObjectException if the inputted JSONType is invalid
      */
     @Override
     public void deserialize(JSONType arg0) throws InvalidObjectException {
-        
+
         JSONObject obj;
         if (!arg0.isObject()) {
             throw new InvalidObjectException("Inputted JSON type is an invalid object");
@@ -67,7 +74,7 @@ public class Host implements JSONSerializable {
 
         obj = (JSONObject) arg0;
         // Small fix here, config specifies "addr"
-        String[] keys = {"addr", "port", "uid"};
+        String[] keys = { "addr", "port", "uid" };
         obj.checkValidity(keys);
 
         String addr = obj.getString("addr");
@@ -80,8 +87,8 @@ public class Host implements JSONSerializable {
 
         if (!Message.checkString(uid)) {
             throw new IllegalArgumentException("UID input is null or empty");
-        } 
-        
+        }
+
         if (prt < 0) {
             throw new IllegalArgumentException("Port number can't be less than 0");
         }
@@ -93,6 +100,7 @@ public class Host implements JSONSerializable {
 
     /**
      * Deserializes the fields of a JSON object into a message type
+     * 
      * @return a Message object with it's fields populated by those in the packet
      */
     @Override
@@ -107,6 +115,7 @@ public class Host implements JSONSerializable {
     /**
      * helper method for the constructor
      * checks if the inputted string is Base64
+     * 
      * @param str inputted string
      * @return true if the string is Base64, false otherwise
      */
@@ -128,6 +137,7 @@ public class Host implements JSONSerializable {
 
     /**
      * returns the address of this host
+     * 
      * @return ^
      */
     public String getAddress() {
@@ -136,6 +146,7 @@ public class Host implements JSONSerializable {
 
     /**
      * returns the port number of this host
+     * 
      * @return ^
      */
     public int getPort() {
@@ -144,10 +155,11 @@ public class Host implements JSONSerializable {
 
     /**
      * returns the target UID of this message
+     * 
      * @return ^
      */
     public String getTargetUid() {
         return this.UID;
     }
-    
+
 }

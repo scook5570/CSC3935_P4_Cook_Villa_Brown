@@ -18,7 +18,13 @@ public class KeyValueStore implements JSONSerializable {
     private static class KeyValueEntry {
         final String originalKey;
         final String value;
-        
+
+        /**
+         * Constructor for KeyValueEntry
+         * 
+         * @param originalKey the original key string
+         * @param value       the value string
+         */
         KeyValueEntry(String originalKey, String value) {
             this.originalKey = originalKey;
             this.value = value;
@@ -37,6 +43,7 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Constructor for the KeyValueStore
+     * 
      * @param obj JSON object to intialize KeyValueStore
      * @throws InvalidObjectException
      */
@@ -47,18 +54,21 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Stores a value for a given identifier and original key
-     * @param identifier the UID identifier to store the value to
+     * 
+     * @param identifier  the UID identifier to store the value to
      * @param originalKey the original key string
-     * @param value the value to store
+     * @param value       the value to store
      */
     public synchronized void put(String identifier, String originalKey, String value) {
         store.put(identifier, new KeyValueEntry(originalKey, value));
     }
 
     /**
-     * Stores a value for a given identifier (backward compatibility - no original key)
+     * Stores a value for a given identifier (backward compatibility - no original
+     * key)
+     * 
      * @param identifier the identifier to store the value to
-     * @param value the value to store to the identifier
+     * @param value      the value to store to the identifier
      */
     public synchronized void put(String identifier, String value) {
         store.put(identifier, new KeyValueEntry(null, value));
@@ -66,6 +76,7 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Retrieves a value from a given identifier
+     * 
      * @param identifier the identifier to retrieve the value from
      * @return the value from the identifier
      */
@@ -76,6 +87,7 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Retrieves the original key from a given identifier
+     * 
      * @param identifier the identifier to retrieve the original key from
      * @return the original key, or null if not found or not stored
      */
@@ -86,18 +98,20 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Gets all stored entries as a map of identifier -> [originalKey, value]
+     * 
      * @return map containing all entries
      */
     public synchronized Map<String, String[]> getAllEntries() {
         Map<String, String[]> result = new HashMap<>();
         store.forEach((identifier, entry) -> {
-            result.put(identifier, new String[]{entry.originalKey, entry.value});
+            result.put(identifier, new String[] { entry.originalKey, entry.value });
         });
         return result;
     }
 
     /**
      * Checks whether an identifier is contained in the store
+     * 
      * @param identifier the identifier to check for
      * @return true if the identifier is contained or false if it is not
      */
@@ -107,6 +121,7 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Populate the KeyStoreValue from the JSONObj
+     * 
      * @param obj the JSON object to deserialize
      * @throws InvalidObjectException if the JSONObj is in an incorrect format
      */
@@ -133,7 +148,8 @@ public class KeyValueStore implements JSONSerializable {
             String[] pairKeys = { "key", "value" };
             pair.checkValidity(pairKeys);
 
-            // Store the key-value pair (use key as both identifier and originalKey for deserialization)
+            // Store the key-value pair (use key as both identifier and originalKey for
+            // deserialization)
             String key = pair.getString("key");
             String value = pair.getString("value");
             store.put(key, new KeyValueEntry(key, value));
@@ -142,12 +158,14 @@ public class KeyValueStore implements JSONSerializable {
 
     /**
      * Method to pretty print the contents of the keyvalue store
+     * 
+     * @return string representation of the keyvalue store
      */
     @Override
     public synchronized String toString() {
         StringBuilder sb = new StringBuilder("KevValueStore {\n");
-        store.forEach((identifier, entry) -> 
-            sb.append("  ").append(identifier).append(" : ").append(entry.value).append("\n"));
+        store.forEach((identifier, entry) -> sb.append("  ").append(identifier).append(" : ").append(entry.value)
+                .append("\n"));
         sb.append("}");
         return sb.toString();
     }
@@ -155,6 +173,7 @@ public class KeyValueStore implements JSONSerializable {
     /**
      * Serializes the KeyValueStore into a JSONObj which is an arrya of key-value
      * pairs
+     * 
      * @return the store as a JSONObj
      */
     @Override

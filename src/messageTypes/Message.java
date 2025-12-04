@@ -11,16 +11,15 @@ import merrimackutil.json.types.JSONType;
  * abstract super class representing an overarching message type
  */
 public abstract class Message {
-    
+
     protected String type;
     protected String sourceAddress;
     protected int sourcePort;
 
-   
-
     /**
      * Builds a Message with the given fields
-     * @param tp message type
+     * 
+     * @param tp      message type
      * @param srcAddr source address (IP address of the sender)
      * @param srcPort soure port (port number of the sender)
      */
@@ -45,8 +44,7 @@ public abstract class Message {
         this.sourcePort = srcPort;
     }
 
-
-    //-Getters------------------------||
+    // -Getters------------------------||
     public String getType() {
         return this.type;
     }
@@ -58,10 +56,11 @@ public abstract class Message {
     public int getSourcePort() {
         return this.sourcePort;
     }
-    //--------------------------------||
+    // --------------------------------||
 
     /**
      * Static method to build any of the messages with a JSONType
+     * 
      * @param obj the JSON object
      * @return a Message of whatever type is in the JSONType
      * @throws InvalidObjectException
@@ -82,10 +81,9 @@ public abstract class Message {
             String targetUID;
             String key;
             String value;
-            String[] findNode_and_findValue_keys = {"type", "source-address", "source-port", "target-uid"};
-            String[] nodeKeys = {"type", "source-address", "source-port", "hosts"};
-            String[] store_and_value_keys = {"type", "source-address", "source-port", "key", "value"};
-
+            String[] findNode_and_findValue_keys = { "type", "source-address", "source-port", "target-uid" };
+            String[] nodeKeys = { "type", "source-address", "source-port", "hosts" };
+            String[] store_and_value_keys = { "type", "source-address", "source-port", "key", "value" };
 
             switch (obj.getString("key")) {
 
@@ -117,9 +115,10 @@ public abstract class Message {
                         hosts = (Host[]) hostsObj;
                         return new Node(type, sourceAddr, sourcePrt, hosts);
                     } else {
-                        throw new IllegalArgumentException("''hosts' field of the json object could not be converted into a Host array");
+                        throw new IllegalArgumentException(
+                                "''hosts' field of the json object could not be converted into a Host array");
                     }
-                   
+
                 case ("STORE"):
                     obj.checkValidity(store_and_value_keys);
                     type = obj.getString("type");
@@ -137,24 +136,27 @@ public abstract class Message {
                     key = obj.getString("key");
                     value = obj.getString("value");
                     return new Value(type, sourceAddr, sourcePrt, key, value);
-                
+
                 default:
                     throw new IllegalArgumentException("Could not convert object into a Message object");
             }
 
         } else {
-            throw new IllegalArgumentException("Inputted JSON object doesn't contain the 'type' key required for this method");
+            throw new IllegalArgumentException(
+                    "Inputted JSON object doesn't contain the 'type' key required for this method");
         }
     }
 
     /**
      * Serializes the fields of the message into a JSON object
-     * @return a JSON object containing the fields of this message
+     * 
+     * @return a JSON string containing the fields of this message
      */
-    public abstract JSONObject serialize();
+    public abstract String serialize();
 
     /**
      * Helper method for if theres ever a need to check the type of a message object
+     * 
      * @return the value associated with the message type
      */
     public String getMessageType() {
@@ -179,6 +181,7 @@ public abstract class Message {
 
     /**
      * Returns true if the inputted string is a valid message type, false otherwise
+     * 
      * @return ^
      */
     public boolean checkType(String tp) {
@@ -197,6 +200,7 @@ public abstract class Message {
     /**
      * Helper method for whenever a string needs to be encoded into Base64
      * (can be removed if not as useful as I thought)
+     * 
      * @param str to be encoded string
      * @return a base 64 encoded version of the inputted string
      */
@@ -207,6 +211,7 @@ public abstract class Message {
     /**
      * helper method for the constructor
      * checks if the inputted string is Base64
+     * 
      * @param str inputted string
      * @return true if the string is Base64, false otherwise
      */
@@ -220,7 +225,9 @@ public abstract class Message {
     }
 
     /**
-     * Helper class to do basic string checks (made static in case it helps outside of expected classes)
+     * Helper class to do basic string checks (made static in case it helps outside
+     * of expected classes)
+     * 
      * @param str inputted string
      * @return true if the string isn't empty or null, false otherwise
      */

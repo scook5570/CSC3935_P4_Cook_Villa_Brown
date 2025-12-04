@@ -51,6 +51,7 @@ public class DistributedHashTable {
 
     /**
      * Builds a DistributedHashTable
+     * 
      * @param port          the port to listen on
      * @param address       the address to listen on
      * @param uid           the node's UID
@@ -80,14 +81,16 @@ public class DistributedHashTable {
                 hash.update(buff.array());
                 String bootstrapUid = Base64.getEncoder().encodeToString(hash.digest());
 
-                // Connect to the bootstrap node and send a FINDNODE request to discover other peers
+                // Connect to the bootstrap node and send a FINDNODE request to discover other
+                // peers
                 try (Socket sock = new Socket(bootstrapAddr, bootstrapPort)) {
                     Host bootstrapHost = new Host(bootstrapAddr, bootstrapPort, bootstrapUid);
                     routingTable.addHost(uid, bootstrapHost);
                     // Create a FINDNODE message requesting peers closest to this node's UID
                     FindNode findNode = new FindNode("FINDNODE", address, port, uid);
-                    // windering if refactor for MSG types is better to not have to do a toJSON but to be honest its style choice
-                    String requestJson = findNode.serialize().toJSON();
+                    // windering if refactor for MSG types is better to not have to do a toJSON but
+                    // to be honest its style choice
+                    String requestJson = findNode.serialize();
 
                     // Send the findnode request to the bootstrap node
                     BufferedWriter out = new BufferedWriter(
@@ -120,7 +123,8 @@ public class DistributedHashTable {
                         }
                     }
                 } catch (IOException | InvalidJSONException | IllegalArgumentException e) {
-                    System.err.println("DHT: Error sending FINDNODE to " + bootstrapAddr + ":" + bootstrapPort + ": " + e);
+                    System.err.println(
+                            "DHT: Error sending FINDNODE to " + bootstrapAddr + ":" + bootstrapPort + ": " + e);
                 }
             } catch (NoSuchAlgorithmException e) {
                 System.err.println("Internal DHT Error: SHA1 hash not supported.");
@@ -136,15 +140,23 @@ public class DistributedHashTable {
         startStoreReplicator();
     }
 
+    /**
+     * Starts the periodic pinger task
+     */
     private void startPinger() {
-        if (pinger != null) return;
+        if (pinger != null)
+            return;
         pinger = new Timer("DHT-Pinger", true);
         // Schedule first ping in 20 seconds
         schedulePingTask();
     }
 
+    /**
+     * Schedules the next ping task to run after a fixed delay.
+     */
     private void schedulePingTask() {
-        if (pinger == null) return;
+        if (pinger == null)
+            return;
         pinger.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -160,13 +172,18 @@ public class DistributedHashTable {
         }, 20000);
     }
 
+    /**
+     * Pings all peers in the routing table and removes any that do not respond
+     */
     private void pingAllPeers() {
         List<Host> hosts = routingTable.getAllHosts();
         HashSet<String> seen = new HashSet<>();
         for (Host h : hosts) {
-            if (h == null) continue;
+            if (h == null)
+                continue;
             String peerUid = h.getTargetUid();
-            if (peerUid == null || seen.contains(peerUid)) continue;
+            if (peerUid == null || seen.contains(peerUid))
+                continue;
             seen.add(peerUid);
             boolean ok = false;
             try {
@@ -176,26 +193,34 @@ public class DistributedHashTable {
             }
             if (!ok) {
                 routingTable.removeHost(uid, peerUid);
-                System.err.println("DistributedHashTable: removed unreachable peer " + h.getAddress() + ":" + h.getPort());
+                System.err.println(
+                        "DistributedHashTable: removed unreachable peer " + h.getAddress() + ":" + h.getPort());
             }
         }
     }
 
+    /**
+     * Sends a PING message to a peer and waits for a PONG response
+     * 
+     * @param peer the peer to ping
+     * @return true if the peer responded with a PONG, false otherwise
+     */
     private boolean sendPing(Host peer) {
         try (Socket s = new Socket()) {
             s.connect(new InetSocketAddress(peer.getAddress(), peer.getPort()), PING_CONNECT_TIMEOUT_MS);
             s.setSoTimeout(PING_READ_TIMEOUT_MS);
 
             Ping p = new Ping("PING", address, port);
-            String requestJson = p.serialize().toJSON();
+            String requestJson = p.serialize();
 
             // Send PING message
-            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
+            BufferedWriter out = new BufferedWriter(
+                    new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
             out.write(requestJson);
             out.write("\n");
             out.flush();
-            s.shutdownOutput();  // Signal EOF to server without closing input stream
-            
+            s.shutdownOutput(); // Signal EOF to server without closing input stream
+
             // Read PONG response from the same socket
             StringBuilder response = new StringBuilder();
             BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
@@ -219,15 +244,23 @@ public class DistributedHashTable {
         }
     }
 
+    /**
+     * Starts the store replicator timer
+     */
     private void startStoreReplicator() {
-        if (storeReplicator != null) return;
+        if (storeReplicator != null)
+            return;
         storeReplicator = new Timer("DHT-StoreReplicator", true);
         // Schedule first replication in 60 seconds
         scheduleReplicationTask();
     }
 
+    /**
+     * Schedules the next replication task
+     */
     private void scheduleReplicationTask() {
-        if (storeReplicator == null) return;
+        if (storeReplicator == null)
+            return;
         storeReplicator.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -243,10 +276,13 @@ public class DistributedHashTable {
         }, 60000);
     }
 
+    /**
+     * Replicates all entries in the local key value store to the k closest peers
+     */
     private void replicateAllEntries() {
         // Get all entries from the key-value store
         Map<String, String[]> allEntries = kvStore.getAllEntries();
-        
+
         if (allEntries.isEmpty()) {
             return;
         }
@@ -255,7 +291,6 @@ public class DistributedHashTable {
         for (Map.Entry<String, String[]> entry : allEntries.entrySet()) {
             String identifier = entry.getKey();
             String[] keyValue = entry.getValue();
-            String originalKey = keyValue[0];
             String value = keyValue[1]; // keyValue[0] is originalKey, keyValue[1] is value
 
             // Find k closest peers to this identifier
@@ -265,7 +300,7 @@ public class DistributedHashTable {
             for (Host peer : closestPeers) {
                 try (Socket sock = new Socket(peer.getAddress(), peer.getPort())) {
                     Store store = new Store("STORE", address, port, identifier, value);
-                    String requestJson = store.serialize().toJSON();
+                    String requestJson = store.serialize();
 
                     BufferedWriter out = new BufferedWriter(
                             new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8));
@@ -280,7 +315,9 @@ public class DistributedHashTable {
     }
 
     /**
-     * A put operation that takes a key and value, stores this key value pair in the local key value store, and issues a STORE message to the k closest peers.
+     * A put operation that takes a key and value, stores this key value pair in the
+     * local key value store, and issues a STORE message to the k closest peers.
+     * 
      * @param key   the key to store
      * @param value the value to store
      */
@@ -312,20 +349,23 @@ public class DistributedHashTable {
         for (Host peer : closestPeers) {
             try (Socket sock = new Socket(peer.getAddress(), peer.getPort())) {
                 Store store = new Store("STORE", address, port, keyUid, value);
-                String requestJson = store.serialize().toJSON();
+                String requestJson = store.serialize();
 
                 BufferedWriter out = new BufferedWriter(
                         new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8));
                 out.write(requestJson);
                 out.flush();
             } catch (IOException e) {
-                System.err.println("DHT: Error sending STORE to " + peer.getAddress() + ":" + peer.getPort() + ": " + e);
+                System.err
+                        .println("DHT: Error sending STORE to " + peer.getAddress() + ":" + peer.getPort() + ": " + e);
             }
         }
     }
 
     /**
-     * A get operation that takes a key (a String), checks the local key value store, if found return that entry
+     * A get operation that takes a key (a String), checks the local key value
+     * store, if found return that entry
+     * 
      * @param key the key to look up
      * @return the value associated with the key
      */
@@ -360,7 +400,7 @@ public class DistributedHashTable {
             try (Socket sock = new Socket(peer.getAddress(), peer.getPort())) {
                 // Create a FINDVALUE message requesting the value for the key UID
                 FindValue findValue = new FindValue("FINDVALUE", address, port, keyUid);
-                String requestJson = findValue.serialize().toJSON();
+                String requestJson = findValue.serialize();
 
                 // Send the FINDVALUE request to the peer
                 BufferedWriter out = new BufferedWriter(
@@ -382,7 +422,7 @@ public class DistributedHashTable {
                     JSONObject obj = JsonIO.readObject(response.toString());
                     Message msg = Message.buildMessage(obj);
 
-                    // Return the value if found 
+                    // Return the value if found
                     if (msg instanceof Value) {
                         Value valueMSG = (Value) msg;
                         String foundValue = valueMSG.getValue();
@@ -431,5 +471,3 @@ public class DistributedHashTable {
         return routingTable.getAllRoutes();
     }
 }
-
-

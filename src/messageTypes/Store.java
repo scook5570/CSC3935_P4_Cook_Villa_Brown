@@ -1,4 +1,5 @@
 package messageTypes;
+
 import merrimackutil.json.types.JSONObject;
 
 public class Store extends Message {
@@ -9,14 +10,15 @@ public class Store extends Message {
 
     /**
      * Builds a Store message type from the inputted values
-     * @param type message type of this object
+     * 
+     * @param type    message type of this object
      * @param srcAddr source IP address
      * @param srcPort source port
-     * @param ky key
-     * @param val value
+     * @param ky      key
+     * @param val     value
      */
     public Store(String type, String srcAddr, int srcPort, String ky, String val) {
-        
+
         super(type, srcAddr, srcPort);
 
         if (type != "STORE") {
@@ -39,32 +41,35 @@ public class Store extends Message {
 
     /**
      * Serializes the fields of the message into a JSON object
-     * @return a JSON object containing the fields of this message
+     * 
+     * @return a JSON string containing the fields of this message
      */
     @Override
-    public JSONObject serialize() {
+    public String serialize() {
         JSONObject obj = new JSONObject();
         obj.put("type", this.type);
         obj.put("source-address", this.sourceAddress);
         obj.put("source-port", this.sourcePort);
         obj.put("key", this.key);
         obj.put("value", this.value);
-        return obj;
+        return obj.toJSON();
     }
-    
+
     /**
      * Returns the key value as a pair
+     * 
      * @return
      */
     public Tuple getKeyValuePair() {
         return this.keyValuePair;
     }
 
-    // or in case it's more useful to get them individually . . . 
+    // or in case it's more useful to get them individually . . .
 
     /**
      * Returns the key field of this message
-     * @return ^ 
+     * 
+     * @return ^
      */
     public String getKey() {
         return this.keyValuePair.getKey();
@@ -72,6 +77,7 @@ public class Store extends Message {
 
     /**
      * Returns the value field of this message
+     * 
      * @return ^
      */
     public String getValue() {
