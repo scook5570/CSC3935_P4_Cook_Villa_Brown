@@ -137,7 +137,7 @@ public class ServiceThread implements Runnable {
             FindNode fn = (FindNode) m;
             String target = fn.getTargetUid();
             ArrayList<Host> closest = rt.getKClosestPeers(target, rt.getK());
-            Node nodeMsg = new Node("NODE", address, port, closest.toArray(new Host[0]));
+            Node nodeMsg = new Node("NODELIST", address, port, closest.toArray(new Host[0]));
             responseStr = nodeMsg.serialize().toJSON();
 
         } else if (m instanceof FindValue) {
@@ -154,7 +154,7 @@ public class ServiceThread implements Runnable {
                 responseStr = vmsg.serialize().toJSON();
             } else {
                 ArrayList<Host> closest = rt.getKClosestPeers(target, rt.getK());
-                Node nodeMsg = new Node("NODE", address, port, closest.toArray(new Host[0]));
+                Node nodeMsg = new Node("NODELIST", address, port, closest.toArray(new Host[0]));
                 responseStr = nodeMsg.serialize().toJSON();
             }
 

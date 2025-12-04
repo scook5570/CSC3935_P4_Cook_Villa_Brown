@@ -19,7 +19,7 @@ public class Store extends Message {
         
         super(type, srcAddr, srcPort);
 
-        if (type != "STORE") {
+        if (!type.equals("STORE")) {
             throw new IllegalArgumentException("Type field should be 'STORE' for Store message type");
         }
 

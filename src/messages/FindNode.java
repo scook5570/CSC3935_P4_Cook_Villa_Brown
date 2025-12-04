@@ -19,7 +19,7 @@ public class FindNode extends Message {
 
         super(type, srcAddr, srcPort);
 
-        if (type != "FINDNODE") {
+        if (!type.equals("FINDNODE")) {
             throw new IllegalArgumentException("Type field must be FINDNODE for the FindNode message type");
         }
 

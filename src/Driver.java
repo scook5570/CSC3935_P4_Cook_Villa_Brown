@@ -24,6 +24,7 @@ import dht.DistributedHashTable;
 import merrimackutil.cli.LongOption;
 import merrimackutil.cli.OptionParser;
 import merrimackutil.json.JsonIO;
+import merrimackutil.json.InvalidJSONException;
 import merrimackutil.json.types.JSONObject;
 import merrimackutil.util.Tuple;
 import model.Configuration;
@@ -117,10 +118,16 @@ public class Driver
      */
     public static void loadConfig() throws FileNotFoundException
     {
-        JSONObject obj = JsonIO.readObject(new File(configFile));
         try
         { 
+            JSONObject obj = JsonIO.readObject(new File(configFile));
             conf = new Configuration(obj);
+        }
+        catch(InvalidJSONException ex)
+        {
+            System.err.println("dhtnode: invalid JSON in configuration file.");
+            System.out.println(ex);
+            System.exit(1);
         }
         catch(InvalidObjectException ex)
         {
@@ -138,7 +145,6 @@ public class Driver
     public static void doCLI() throws InterruptedException, IOException
     {
         String command;
-        Scanner scan = new Scanner(System.in);
         boolean done = false;
 
         // Construct the distributed hash table (dht). This is our abstraction 
@@ -148,19 +154,21 @@ public class Driver
 
         System.out.println("Please type .help for help or .quit to exit the application.");
 
-        while (!done)
+        try (Scanner scan = new Scanner(System.in))
         {
-            // Read a command.
-            do 
-            {   
-                System.out.print("> ");
-                command = scan.nextLine();
-                command = command.strip();
-            } while (command.equals(""));
+            while (!done)
+            {
+                // Read a command.
+                do 
+                {   
+                    System.out.print("> ");
+                    command = scan.nextLine();
+                    command = command.strip();
+                } while (command.equals(""));
 
-            // Exit the application.
-            if (command.equalsIgnoreCase(".quit"))
-                done = true;
+                // Exit the application.
+                if (command.equalsIgnoreCase(".quit"))
+                    done = true;
 
             // Put a new key value pair into the DHT.
             else if (command.equalsIgnoreCase(".put"))
@@ -230,6 +238,7 @@ public class Driver
                 System.out.println("Error: \"" + command + "\" unknown.");
             }
 
+        }
         }
     }
 

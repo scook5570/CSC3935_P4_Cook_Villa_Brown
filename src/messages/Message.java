@@ -3,6 +3,7 @@ import java.io.InvalidObjectException;
 import java.util.Base64;
 
 import dht.Host;
+import merrimackutil.json.types.JSONArray;
 import merrimackutil.json.types.JSONObject;
 import merrimackutil.json.types.JSONType;
 
@@ -86,7 +87,7 @@ public abstract class Message {
             String[] store_and_value_keys = {"type", "source-address", "source-port", "key", "value"};
 
 
-            switch (obj.getString("key")) {
+            switch (obj.getString("type")) {
 
                 case ("FINDNODE"):
                     obj.checkValidity(findNode_and_findValue_keys);
@@ -103,21 +104,25 @@ public abstract class Message {
                     sourcePrt = obj.getInt("source-port");
                     targetUID = obj.getString("target-uid");
                     return new FindValue(type, sourceAddr, sourcePrt, targetUID);
-
-                case ("NODE"):
+                    // Per the instructions this shuld be nodelist
+                case ("NODELIST"):
                     obj.checkValidity(nodeKeys);
                     type = obj.getString("type");
                     sourceAddr = obj.getString("source-address");
                     sourcePrt = obj.getInt("source-port");
-                    Object hostsObj = obj.get("hosts");
-                    Host[] hosts;
-
-                    if (hostsObj instanceof Host[]) {
-                        hosts = (Host[]) hostsObj;
-                        return new Node(type, sourceAddr, sourcePrt, hosts);
-                    } else {
-                        throw new IllegalArgumentException("''hosts' field of the json object could not be converted into a Host array");
+                    
+                    // Deserialize hosts array
+                    JSONArray hostsArray = obj.getArray("hosts");
+                    Host[] hosts = new Host[hostsArray.size()];
+                    for (int i = 0; i < hostsArray.size(); i++) {
+                        try {
+                            JSONObject hostObj = hostsArray.getObject(i);
+                            hosts[i] = new Host(hostObj);
+                        } catch (InvalidObjectException e) {
+                            throw new IllegalArgumentException("Failed to deserialize host at index " + i + ": " + e.getMessage());
+                        }
                     }
+                    return new Node(type, sourceAddr, sourcePrt, hosts);
                    
                 case ("STORE"):
                     obj.checkValidity(store_and_value_keys);
@@ -185,6 +190,7 @@ public abstract class Message {
             case "FINDVALUE":
             case "FINDNODE":
             case "STORE":
+            case "NODE":
             case "NODELIST":
             case "VALUE":
                 return true;
