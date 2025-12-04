@@ -184,6 +184,12 @@ public class DistributedHashTable {
             return null;
         }
 
+        // Check local keyvalue store first and return value if it is not null
+        String value = kvStore.getValue(keyUid);
+        if (value != null) {
+            return value;
+        }
+
         // If not found in local, check the k = 3 closest neighbors
         ArrayList<Host> closestPeers = routingTable.getKClosestPeers(keyUid, K);
 
@@ -238,12 +244,6 @@ public class DistributedHashTable {
             } catch (IOException | InvalidJSONException | IllegalArgumentException e) {
                 System.err.println("DHT: Error asking " + peer.getAddress() + ":" + peer.getPort() + ": " + e);
             }
-        }
-
-        // Check local store
-        String value = kvStore.getValue(keyUid);
-        if (value != null) {
-            return value;
         }
 
         // Value not found then return null
