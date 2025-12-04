@@ -139,7 +139,6 @@ public class DistributedHashTable {
     private void startPinger() {
         if (pinger != null) return;
         pinger = new Timer("DHT-Pinger", true);
-        System.out.println("[" + new java.util.Date() + "] DHT: Pinger started - will ping all peers every 20 seconds");
         // Schedule first ping in 20 seconds
         schedulePingTask();
     }
@@ -162,16 +161,13 @@ public class DistributedHashTable {
     }
 
     private void pingAllPeers() {
-        System.out.println("[" + new java.util.Date() + "] DHT: Pinging all peers...");
         List<Host> hosts = routingTable.getAllHosts();
         HashSet<String> seen = new HashSet<>();
-        int pingedCount = 0;
         for (Host h : hosts) {
             if (h == null) continue;
             String peerUid = h.getTargetUid();
             if (peerUid == null || seen.contains(peerUid)) continue;
             seen.add(peerUid);
-            pingedCount++;
             boolean ok = false;
             try {
                 ok = sendPing(h);
@@ -183,7 +179,6 @@ public class DistributedHashTable {
                 System.err.println("DistributedHashTable: removed unreachable peer " + h.getAddress() + ":" + h.getPort());
             }
         }
-        System.out.println("[" + new java.util.Date() + "] DHT: Ping cycle completed - checked " + pingedCount + " peers");
     }
 
     private boolean sendPing(Host peer) {
@@ -227,7 +222,6 @@ public class DistributedHashTable {
     private void startStoreReplicator() {
         if (storeReplicator != null) return;
         storeReplicator = new Timer("DHT-StoreReplicator", true);
-        System.out.println("[" + new java.util.Date() + "] DHT: Store replicator started - will replicate every 60 seconds");
         // Schedule first replication in 60 seconds
         scheduleReplicationTask();
     }
@@ -254,11 +248,8 @@ public class DistributedHashTable {
         Map<String, String[]> allEntries = kvStore.getAllEntries();
         
         if (allEntries.isEmpty()) {
-            System.out.println("[" + new java.util.Date() + "] DHT: Periodic replication triggered - no entries to replicate");
             return;
         }
-
-        System.out.println("[" + new java.util.Date() + "] DHT: Starting periodic replication of " + allEntries.size() + " entries...");
 
         // For each entry, send STORE messages to the k closest peers
         for (Map.Entry<String, String[]> entry : allEntries.entrySet()) {
@@ -269,9 +260,6 @@ public class DistributedHashTable {
 
             // Find k closest peers to this identifier
             ArrayList<Host> closestPeers = routingTable.getKClosestPeers(identifier, K);
-            
-            String keyDisplay = (originalKey != null) ? originalKey : identifier.substring(0, Math.min(8, identifier.length())) + "...";
-            System.out.println("  Replicating key '" + keyDisplay + "' to " + closestPeers.size() + " peers");
 
             // Send STORE message to each of the closest peers
             for (Host peer : closestPeers) {
@@ -289,7 +277,6 @@ public class DistributedHashTable {
                 }
             }
         }
-        System.out.println("[" + new java.util.Date() + "] DHT: Periodic replication completed");
     }
 
     /**
