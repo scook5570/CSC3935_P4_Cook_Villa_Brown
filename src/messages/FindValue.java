@@ -19,7 +19,7 @@ public class FindValue extends Message {
 
         super(type, srcAddr, srcPort);
 
-        if (type != "FINDVALUE") {
+        if (!type.equals("FINDVALUE")) {
             throw new IllegalArgumentException("Type field must be FindValue for the FindValue message type");
         }
 
