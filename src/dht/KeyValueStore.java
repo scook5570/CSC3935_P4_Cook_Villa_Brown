@@ -18,6 +18,13 @@ public class KeyValueStore implements JSONSerializable {
     private final Map<String, String> store;
 
     /**
+     * Default constructor for the KeyValueStore
+     */
+    public KeyValueStore() {
+        this.store = new HashMap<>();
+    }
+
+    /**
      * Constructor for the KeyValueStore
      * @param obj JSON object to intialize KeyValueStore
      * @throws InvalidObjectException

@@ -6,6 +6,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
+import java.util.List;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -19,6 +25,8 @@ import messages.Message;
 import messages.Node;
 import messages.Store;
 import messages.Value;
+import messages.Ping;
+import messages.Pong;
 import merrimackutil.json.JsonIO;
 import merrimackutil.json.InvalidJSONException;
 import merrimackutil.json.types.JSONObject;
@@ -35,6 +43,10 @@ public class DistributedHashTable {
     private ServiceThread serviceThread;
     private Thread serviceThreadRunner;
     private static final int K = 3; // Number of closest peers to contact
+    // Ping timeouts (increased to avoid false positives on localhost under load)
+    private static final int PING_CONNECT_TIMEOUT_MS = 10000;
+    private static final int PING_READ_TIMEOUT_MS = 10000;
+    private ScheduledExecutorService pinger = null;
 
     /**
      * Builds a DistributedHashTable
@@ -114,6 +126,86 @@ public class DistributedHashTable {
             } catch (Exception e) {
                 System.err.println("DHT: Error during bootstrap: " + e);
             }
+        }
+
+        // start periodic pinger
+        startPinger();
+    }
+
+    private void startPinger() {
+        if (this.pinger != null) return;
+        this.pinger = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "DHT-Pinger");
+            t.setDaemon(true);
+            return t;
+        });
+
+        // delay 30 seconds before first ping (let node stabilize), then every 20 seconds
+        this.pinger.scheduleAtFixedRate(() -> {
+            try {
+                pingAllPeers();
+            } catch (Exception e) {
+                System.err.println("DistributedHashTable pinger error: " + e);
+            }
+        }, 20, 20, TimeUnit.SECONDS);
+    }
+
+    private void pingAllPeers() {
+        List<Host> hosts = this.routingTable.getAllHosts();
+        HashSet<String> seen = new HashSet<>();
+        for (Host h : hosts) {
+            if (h == null) continue;
+            String peerUid = h.getTargetUid();
+            if (peerUid == null || seen.contains(peerUid)) continue;
+            seen.add(peerUid);
+            boolean ok = false;
+            try {
+                ok = sendPing(h);
+            } catch (Exception ex) {
+                ok = false;
+            }
+            if (!ok) {
+                this.routingTable.removeHost(this.uid, peerUid);
+                System.err.println("DistributedHashTable: removed unreachable peer " + h.getAddress() + ":" + h.getPort());
+            }
+        }
+    }
+
+    private boolean sendPing(Host peer) {
+        try (Socket s = new Socket()) {
+            s.connect(new InetSocketAddress(peer.getAddress(), peer.getPort()), PING_CONNECT_TIMEOUT_MS);
+            s.setSoTimeout(PING_READ_TIMEOUT_MS);
+
+            Ping p = new Ping("PING", this.address, this.port);
+            String requestJson = p.serialize().toJSON();
+
+            // Send PING message
+            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
+            out.write(requestJson);
+            out.write("\n");
+            out.flush();
+            s.shutdownOutput();  // Signal EOF to server without closing input stream
+            
+            // Read PONG response from the same socket
+            StringBuilder response = new StringBuilder();
+            BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
+            String line;
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
+
+            if (response.length() == 0) {
+                return false;
+            }
+            JSONObject obj = JsonIO.readObject(response.toString());
+            Message msg = Message.buildMessage(obj);
+            return (msg instanceof Pong);
+        } catch (java.net.SocketTimeoutException e) {
+            return false;
+        } catch (java.net.ConnectException e) {
+            return false;
+        } catch (IOException | InvalidJSONException | IllegalArgumentException e) {
+            return false;
         }
     }
 
