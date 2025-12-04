@@ -134,14 +134,32 @@ public class RoutingTable {
     }
 
     /**
+     * Return a snapshot list of all hosts across all buckets.
+     * This is safe for callers that need to iterate without holding
+     * the routing table lock (prevents ConcurrentModificationException).
+     * 
+     * @return list of all hosts in the routing table
+     */
+    public synchronized ArrayList<Host> getAllHosts() {
+        ArrayList<Host> all = new ArrayList<>();
+        for (Bucket b : buckets) {
+            all.addAll(new ArrayList<>(b.hosts));
+        }
+        return all;
+    }
+
+    /**
      * Remove a host from the routing table for the given local UID.
+     * 
      * @param localUid the local node ID
-     * @param peerUid the peer UID to remove
+     * @param peerUid  the peer UID to remove
      */
     public synchronized void removeHost(String localUid, String peerUid) {
         int idx = getBucketIndex(localUid, peerUid);
-        if (idx == -1) return;
-        if (idx < 0 || idx >= buckets.size()) return;
+        if (idx == -1)
+            return;
+        if (idx < 0 || idx >= buckets.size())
+            return;
         Bucket bucket = buckets.get(idx);
         for (int i = 0; i < bucket.hosts.size(); i++) {
             Host h = bucket.hosts.get(i);

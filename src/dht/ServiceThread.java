@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.nio.ByteBuffer;
 import java.net.ServerSocket;
 import java.net.Socket;
+// pinger moved to DistributedHashTable; keep ServiceThread inbound-only
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import merrimackutil.json.JsonIO;
@@ -49,12 +50,15 @@ public class ServiceThread implements Runnable {
         this.kvs = kvs;
     }
 
+    // ServiceThread no longer runs the periodic pinger; DistributedHashTable handles outgoing pings
+
     /**
      * Run the service thread: listen for incoming connections and handle them.
      */
     @Override
     public void run() {
         try (ServerSocket server = new ServerSocket(port)) {
+            server.setReuseAddress(true);
             while (true) {
                 Socket sock = server.accept();
                 try {
@@ -174,6 +178,11 @@ public class ServiceThread implements Runnable {
                 rt.addHosts(uid, hosts);
             }
 
+        } else if (m instanceof Ping) {
+            // reply with PONG
+            Pong pong = new Pong("PONG", address, port);
+            responseStr = pong.serialize().toJSON();
+
         } else if (m instanceof Value) {
             Value vm = (Value) m;
             String key = vm.getKey();
@@ -190,7 +199,14 @@ public class ServiceThread implements Runnable {
             try (BufferedWriter out = new BufferedWriter(
                     new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8))) {
                 out.write(responseStr);
+                out.write("\n");
                 out.flush();
+            }
+            // Close output stream to signal EOF to the client
+            try {
+                sock.shutdownOutput();
+            } catch (IOException e) {
+                // Ignore, socket may already be closed
             }
         }
     }
