@@ -218,8 +218,11 @@ public class DistributedHashTable {
                     if (msg instanceof Value) {
                         Value valueMSG = (Value) msg;
                         String foundValue = valueMSG.getValue();
-                        kvStore.put(keyUid, foundValue);
-                        return foundValue;
+                        // Only store and return if the value is not null
+                        if (foundValue != null) {
+                            kvStore.put(keyUid, foundValue);
+                            return foundValue;
+                        }
                     }
 
                     // Return nodelist if not found
