@@ -142,7 +142,7 @@ public class ServiceThread implements Runnable {
             String target = fn.getTargetUid();
             ArrayList<Host> closest = rt.getKClosestPeers(target, rt.getK());
             Node nodeMsg = new Node("NODELIST", address, port, closest.toArray(new Host[0]));
-            responseStr = nodeMsg.serialize().toJSON();
+            responseStr = nodeMsg.serialize();
 
         } else if (m instanceof FindValue) {
             FindValue fv = (FindValue) m;
@@ -155,11 +155,11 @@ public class ServiceThread implements Runnable {
 
             if (val != null) {
                 Value vmsg = new Value("VALUE", address, port, target, val);
-                responseStr = vmsg.serialize().toJSON();
+                responseStr = vmsg.serialize();
             } else {
                 ArrayList<Host> closest = rt.getKClosestPeers(target, rt.getK());
                 Node nodeMsg = new Node("NODELIST", address, port, closest.toArray(new Host[0]));
-                responseStr = nodeMsg.serialize().toJSON();
+                responseStr = nodeMsg.serialize();
             }
 
         } else if (m instanceof Store) {
@@ -181,7 +181,7 @@ public class ServiceThread implements Runnable {
         } else if (m instanceof Ping) {
             // reply with PONG
             Pong pong = new Pong("PONG", address, port);
-            responseStr = pong.serialize().toJSON();
+            responseStr = pong.serialize();
 
         } else if (m instanceof Value) {
             Value vm = (Value) m;

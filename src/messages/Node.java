@@ -33,7 +33,7 @@ public class Node extends Message {
      * @return a JSON object containing the fields of this message
      */
     @Override
-    public JSONObject serialize() {
+    public String serialize() {
         JSONObject obj = new JSONObject();
         obj.put("type", this.type);
         obj.put("source-address", this.sourceAddress);
@@ -47,7 +47,7 @@ public class Node extends Message {
             }
         }
         obj.put("hosts", hostsArray);
-        return obj;
+        return obj.toJSON();
     }
 
     /**

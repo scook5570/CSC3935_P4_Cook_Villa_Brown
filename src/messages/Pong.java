@@ -11,11 +11,11 @@ public class Pong extends Message {
     }
 
     @Override
-    public JSONObject serialize() {
+    public String serialize() {
         JSONObject obj = new JSONObject();
         obj.put("type", type);
         obj.put("source-address", sourceAddress);
         obj.put("source-port", sourcePort);
-        return obj;
+        return obj.toJSON();
     }
 }

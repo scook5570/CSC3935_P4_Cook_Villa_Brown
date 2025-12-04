@@ -30,16 +30,16 @@ public class Node extends Message {
 
    /**
      * Serializes the fields of the message into a JSON object
-     * @return a JSON object containing the fields of this message
+     * @return a JSON string containing the fields of this message
      */
     @Override
-    public JSONObject serialize() {
+    public String serialize() {
         JSONObject obj = new JSONObject();
         obj.put("type", this.type);
         obj.put("source-address", this.sourceAddress);
         obj.put("source-port", this.sourcePort);
         obj.put("hosts", this.hosts);
-        return obj;
+        return obj.toJSON();
     }
 
     /**

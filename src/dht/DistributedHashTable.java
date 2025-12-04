@@ -87,7 +87,7 @@ public class DistributedHashTable {
                     // Create a FINDNODE message requesting peers closest to this node's UID
                     FindNode findNode = new FindNode("FINDNODE", address, port, uid);
                     // windering if refactor for MSG types is better to not have to do a toJSON but to be honest its style choice
-                    String requestJson = findNode.serialize().toJSON();
+                    String requestJson = findNode.serialize();
 
                     // Send the findnode request to the bootstrap node
                     BufferedWriter out = new BufferedWriter(
@@ -187,7 +187,7 @@ public class DistributedHashTable {
             s.setSoTimeout(PING_READ_TIMEOUT_MS);
 
             Ping p = new Ping("PING", address, port);
-            String requestJson = p.serialize().toJSON();
+            String requestJson = p.serialize();
 
             // Send PING message
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
@@ -255,7 +255,6 @@ public class DistributedHashTable {
         for (Map.Entry<String, String[]> entry : allEntries.entrySet()) {
             String identifier = entry.getKey();
             String[] keyValue = entry.getValue();
-            String originalKey = keyValue[0];
             String value = keyValue[1]; // keyValue[0] is originalKey, keyValue[1] is value
 
             // Find k closest peers to this identifier
@@ -265,7 +264,7 @@ public class DistributedHashTable {
             for (Host peer : closestPeers) {
                 try (Socket sock = new Socket(peer.getAddress(), peer.getPort())) {
                     Store store = new Store("STORE", address, port, identifier, value);
-                    String requestJson = store.serialize().toJSON();
+                    String requestJson = store.serialize();
 
                     BufferedWriter out = new BufferedWriter(
                             new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8));
@@ -312,7 +311,7 @@ public class DistributedHashTable {
         for (Host peer : closestPeers) {
             try (Socket sock = new Socket(peer.getAddress(), peer.getPort())) {
                 Store store = new Store("STORE", address, port, keyUid, value);
-                String requestJson = store.serialize().toJSON();
+                String requestJson = store.serialize();
 
                 BufferedWriter out = new BufferedWriter(
                         new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8));
@@ -360,7 +359,7 @@ public class DistributedHashTable {
             try (Socket sock = new Socket(peer.getAddress(), peer.getPort())) {
                 // Create a FINDVALUE message requesting the value for the key UID
                 FindValue findValue = new FindValue("FINDVALUE", address, port, keyUid);
-                String requestJson = findValue.serialize().toJSON();
+                String requestJson = findValue.serialize();
 
                 // Send the FINDVALUE request to the peer
                 BufferedWriter out = new BufferedWriter(

@@ -11,11 +11,11 @@ public class Ping extends Message {
     }
 
     @Override
-    public JSONObject serialize() {
+    public String serialize() {
         JSONObject obj = new JSONObject();
         obj.put("type", this.type);
         obj.put("source-address", this.sourceAddress);
         obj.put("source-port", this.sourcePort);
-        return obj;
+        return obj.toJSON();
     }
 }

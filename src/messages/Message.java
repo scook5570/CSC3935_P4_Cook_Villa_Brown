@@ -165,7 +165,7 @@ public abstract class Message {
      * Serializes the fields of the message into a JSON object
      * @return a JSON object containing the fields of this message
      */
-    public abstract JSONObject serialize();
+    public abstract String serialize();
 
     /**
      * Helper method for if theres ever a need to check the type of a message object
