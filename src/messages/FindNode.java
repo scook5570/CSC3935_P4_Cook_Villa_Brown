@@ -1,4 +1,5 @@
 package messages;
+
 import merrimackutil.json.types.JSONObject;
 
 /**
@@ -10,10 +11,11 @@ public class FindNode extends Message {
 
     /**
      * Builds a FindNode message type
-     * @param type message type of this object
+     * 
+     * @param type    message type of this object
      * @param srcAddr source IP address
      * @param srcPort source port
-     * @param tUid target UID
+     * @param tUid    target UID
      */
     public FindNode(String type, String srcAddr, int srcPort, String tUID) {
 
@@ -35,6 +37,7 @@ public class FindNode extends Message {
 
     /**
      * Serializes the fields of the message into a JSON string
+     * 
      * @return a JSON string containing the fields of this message
      */
     @Override
@@ -49,10 +52,11 @@ public class FindNode extends Message {
 
     /**
      * returns the target UID of this message
+     * 
      * @return ^
      */
     public String getTargetUid() {
         return this.targetUID;
     }
-    
+
 }

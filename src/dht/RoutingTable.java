@@ -115,18 +115,41 @@ public class RoutingTable {
     }
 
     /* Basic getters - synchronized */
+
+    /**
+     * Get the k value (max records per bucket).
+     * 
+     * @return the k value
+     */
     public synchronized int getK() {
         return k;
     }
 
+    /**
+     * Get a snapshot list of all buckets.
+     * 
+     * @return list of all buckets
+     */
     public synchronized ArrayList<Bucket> getBuckets() {
         return buckets;
     }
 
+    /**
+     * Get a snapshot list of hosts in the specified bucket.
+     * 
+     * @param index the index of the bucket
+     * @return list of hosts in the specified bucket
+     */
     public synchronized Bucket getBucket(int index) {
         return buckets.get(index);
     }
 
+    /**
+     * Get a snapshot list of hosts in the specified bucket.
+     * 
+     * @param bucketIndex the index of the bucket
+     * @return list of hosts in the specified bucket
+     */
     public synchronized ArrayList<Host> getKClosestRecords(int bucketIndex) {
         if (bucketIndex < 0 || bucketIndex >= buckets.size())
             throw new IndexOutOfBoundsException("Invalid bucket index");
@@ -257,6 +280,11 @@ public class RoutingTable {
     public class Bucket {
         private ArrayList<Host> hosts;
 
+        /**
+         * Constructor for Bucket.
+         * 
+         * @param k maximum number of hosts in the bucket
+         */
         public Bucket(int k) {
             hosts = new ArrayList<>(k);
         }

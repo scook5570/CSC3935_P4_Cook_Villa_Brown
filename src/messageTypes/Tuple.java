@@ -2,7 +2,8 @@ package messageTypes;
 
 /**
  * Tuple helper class inspired by Dr. Kissel aka Doc Z-Kizzy aka Da Oracle
- * (If you dont like the nicknames they're from Jelly (if you do they're from me))
+ * (If you dont like the nicknames they're from Jelly (if you do they're from
+ * me))
  * 
  * Used in Store and Value classes
  */
@@ -13,7 +14,8 @@ public class Tuple {
 
     /**
      * Builds a Tuple from the two inputted values
-     * @param ky key
+     * 
+     * @param ky  key
      * @param val value
      */
     public Tuple(String ky, String val) {
@@ -23,14 +25,16 @@ public class Tuple {
 
     /**
      * Returns the key of this tuple
+     * 
      * @return ^
      */
     public String getKey() {
         return this.key;
     }
-    
+
     /**
      * Returns the values of this tuple
+     * 
      * @return ^
      */
     public String getValue() {
