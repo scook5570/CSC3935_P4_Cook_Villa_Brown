@@ -134,6 +134,25 @@ public class RoutingTable {
     }
 
     /**
+     * Remove a host from the routing table for the given local UID.
+     * @param localUid the local node ID
+     * @param peerUid the peer UID to remove
+     */
+    public synchronized void removeHost(String localUid, String peerUid) {
+        int idx = getBucketIndex(localUid, peerUid);
+        if (idx == -1) return;
+        if (idx < 0 || idx >= buckets.size()) return;
+        Bucket bucket = buckets.get(idx);
+        for (int i = 0; i < bucket.hosts.size(); i++) {
+            Host h = bucket.hosts.get(i);
+            if (h.getTargetUid().equals(peerUid)) {
+                bucket.hosts.remove(i);
+                return;
+            }
+        }
+    }
+
+    /**
      * Compute bucket index as the number of leading shared prefix bits between
      * local and peer.
      *
