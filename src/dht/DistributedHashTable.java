@@ -7,9 +7,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.nio.ByteBuffer;
@@ -18,6 +15,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.Map;
 
 import messages.FindNode;
 import messages.FindValue;
@@ -46,7 +46,8 @@ public class DistributedHashTable {
     // Ping timeouts (increased to avoid false positives on localhost under load)
     private static final int PING_CONNECT_TIMEOUT_MS = 10000;
     private static final int PING_READ_TIMEOUT_MS = 10000;
-    private ScheduledExecutorService pinger = null;
+    private Timer pinger = null;
+    private Timer storeReplicator = null;
 
     /**
      * Builds a DistributedHashTable
@@ -130,34 +131,47 @@ public class DistributedHashTable {
 
         // start periodic pinger
         startPinger();
+
+        // start periodic store replicator
+        startStoreReplicator();
     }
 
     private void startPinger() {
-        if (this.pinger != null) return;
-        this.pinger = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "DHT-Pinger");
-            t.setDaemon(true);
-            return t;
-        });
+        if (pinger != null) return;
+        pinger = new Timer("DHT-Pinger", true);
+        System.out.println("[" + new java.util.Date() + "] DHT: Pinger started - will ping all peers every 20 seconds");
+        // Schedule first ping in 20 seconds
+        schedulePingTask();
+    }
 
-        // delay 30 seconds before first ping (let node stabilize), then every 20 seconds
-        this.pinger.scheduleAtFixedRate(() -> {
-            try {
-                pingAllPeers();
-            } catch (Exception e) {
-                System.err.println("DistributedHashTable pinger error: " + e);
+    private void schedulePingTask() {
+        if (pinger == null) return;
+        pinger.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    pingAllPeers();
+                } catch (Exception e) {
+                    System.err.println("DistributedHashTable pinger error: " + e);
+                } finally {
+                    // Schedule the next ping
+                    schedulePingTask();
+                }
             }
-        }, 20, 20, TimeUnit.SECONDS);
+        }, 20000);
     }
 
     private void pingAllPeers() {
-        List<Host> hosts = this.routingTable.getAllHosts();
+        System.out.println("[" + new java.util.Date() + "] DHT: Pinging all peers...");
+        List<Host> hosts = routingTable.getAllHosts();
         HashSet<String> seen = new HashSet<>();
+        int pingedCount = 0;
         for (Host h : hosts) {
             if (h == null) continue;
             String peerUid = h.getTargetUid();
             if (peerUid == null || seen.contains(peerUid)) continue;
             seen.add(peerUid);
+            pingedCount++;
             boolean ok = false;
             try {
                 ok = sendPing(h);
@@ -165,10 +179,11 @@ public class DistributedHashTable {
                 ok = false;
             }
             if (!ok) {
-                this.routingTable.removeHost(this.uid, peerUid);
+                routingTable.removeHost(uid, peerUid);
                 System.err.println("DistributedHashTable: removed unreachable peer " + h.getAddress() + ":" + h.getPort());
             }
         }
+        System.out.println("[" + new java.util.Date() + "] DHT: Ping cycle completed - checked " + pingedCount + " peers");
     }
 
     private boolean sendPing(Host peer) {
@@ -176,7 +191,7 @@ public class DistributedHashTable {
             s.connect(new InetSocketAddress(peer.getAddress(), peer.getPort()), PING_CONNECT_TIMEOUT_MS);
             s.setSoTimeout(PING_READ_TIMEOUT_MS);
 
-            Ping p = new Ping("PING", this.address, this.port);
+            Ping p = new Ping("PING", address, port);
             String requestJson = p.serialize().toJSON();
 
             // Send PING message
@@ -209,6 +224,74 @@ public class DistributedHashTable {
         }
     }
 
+    private void startStoreReplicator() {
+        if (storeReplicator != null) return;
+        storeReplicator = new Timer("DHT-StoreReplicator", true);
+        System.out.println("[" + new java.util.Date() + "] DHT: Store replicator started - will replicate every 60 seconds");
+        // Schedule first replication in 60 seconds
+        scheduleReplicationTask();
+    }
+
+    private void scheduleReplicationTask() {
+        if (storeReplicator == null) return;
+        storeReplicator.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    replicateAllEntries();
+                } catch (Exception e) {
+                    System.err.println("DistributedHashTable store replicator error: " + e);
+                } finally {
+                    // Schedule the next replication
+                    scheduleReplicationTask();
+                }
+            }
+        }, 60000);
+    }
+
+    private void replicateAllEntries() {
+        // Get all entries from the key-value store
+        Map<String, String[]> allEntries = kvStore.getAllEntries();
+        
+        if (allEntries.isEmpty()) {
+            System.out.println("[" + new java.util.Date() + "] DHT: Periodic replication triggered - no entries to replicate");
+            return;
+        }
+
+        System.out.println("[" + new java.util.Date() + "] DHT: Starting periodic replication of " + allEntries.size() + " entries...");
+
+        // For each entry, send STORE messages to the k closest peers
+        for (Map.Entry<String, String[]> entry : allEntries.entrySet()) {
+            String identifier = entry.getKey();
+            String[] keyValue = entry.getValue();
+            String originalKey = keyValue[0];
+            String value = keyValue[1]; // keyValue[0] is originalKey, keyValue[1] is value
+
+            // Find k closest peers to this identifier
+            ArrayList<Host> closestPeers = routingTable.getKClosestPeers(identifier, K);
+            
+            String keyDisplay = (originalKey != null) ? originalKey : identifier.substring(0, Math.min(8, identifier.length())) + "...";
+            System.out.println("  Replicating key '" + keyDisplay + "' to " + closestPeers.size() + " peers");
+
+            // Send STORE message to each of the closest peers
+            for (Host peer : closestPeers) {
+                try (Socket sock = new Socket(peer.getAddress(), peer.getPort())) {
+                    Store store = new Store("STORE", address, port, identifier, value);
+                    String requestJson = store.serialize().toJSON();
+
+                    BufferedWriter out = new BufferedWriter(
+                            new OutputStreamWriter(sock.getOutputStream(), StandardCharsets.UTF_8));
+                    out.write(requestJson);
+                    out.flush();
+                } catch (IOException e) {
+                    // Silently ignore errors during replication to avoid spam
+                    // The periodic pinger will handle removing dead peers
+                }
+            }
+        }
+        System.out.println("[" + new java.util.Date() + "] DHT: Periodic replication completed");
+    }
+
     /**
      * A put operation that takes a key and value, stores this key value pair in the local key value store, and issues a STORE message to the k closest peers.
      * @param key   the key to store
@@ -232,8 +315,8 @@ public class DistributedHashTable {
             return;
         }
 
-        // Store in the key value Store locally using the key UID
-        kvStore.put(keyUid, value);
+        // Store in the key value Store locally using the key UID and original key
+        kvStore.put(keyUid, key, value);
 
         // Find k = 3 closest peers to the key UID
         ArrayList<Host> closestPeers = routingTable.getKClosestPeers(keyUid, K);
