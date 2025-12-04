@@ -141,7 +141,7 @@ public class DistributedHashTable {
         }
 
         // Store in the key value Store locally using the key UID
-        kvStore.put(key, value);
+        kvStore.put(keyUid, value);
 
         // Find k = 3 closest peers to the key UID
         ArrayList<Host> closestPeers = routingTable.getKClosestPeers(keyUid, K);
