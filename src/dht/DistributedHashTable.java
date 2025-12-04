@@ -67,11 +67,10 @@ public class DistributedHashTable {
                 hash.update(buff.array());
                 String bootstrapUid = Base64.getEncoder().encodeToString(hash.digest());
 
-                Host bootstrapHost = new Host(bootstrapAddr, bootstrapPort, bootstrapUid);
-                routingTable.addHost(uid, bootstrapHost);
-
                 // Connect to the bootstrap node and send a FINDNODE request to discover other peers
                 try (Socket sock = new Socket(bootstrapAddr, bootstrapPort)) {
+                    Host bootstrapHost = new Host(bootstrapAddr, bootstrapPort, bootstrapUid);
+                    routingTable.addHost(uid, bootstrapHost);
                     // Create a FINDNODE message requesting peers closest to this node's UID
                     FindNode findNode = new FindNode("FINDNODE", address, port, uid);
                     // windering if refactor for MSG types is better to not have to do a toJSON but to be honest its style choice
@@ -124,6 +123,12 @@ public class DistributedHashTable {
      * @param value the value to store
      */
     public void put(String key, String value) {
+        // Check for null first
+        if (key == null || value == null) {
+            System.err.println("DHT: null key or value to put()");
+            return;
+        }
+
         // Compute key UID
         String keyUid = null;
         try {
@@ -163,6 +168,11 @@ public class DistributedHashTable {
      * @return the value associated with the key
      */
     public String get(String key) {
+        // CHeck for null first
+        if (key == null) {
+            System.err.println("DHT: null key to get()");
+            return null;
+        }
         String keyUid = null;
         try {
             // Compute key UID
